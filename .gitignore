@@ -1,0 +1,34 @@
+
+# MLflow artifacts
+mlruns/
+*.db
+*.db.*
+mlflow.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.so
+.Python
+
+# Virtual environment
+venv/
+env/
+ENV/
+conda_env.yaml
+conda.yaml~
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

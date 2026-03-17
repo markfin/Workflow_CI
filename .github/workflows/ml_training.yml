@@ -1,0 +1,96 @@
+
+name: ML Model Training CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  train-models:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest  # For testing
+    
+    - name: Download and prepare dataset
+      run: |
+        echo "Downloading diabetes dataset..."
+        python -c "
+import requests
+import pandas as pd
+import numpy as np
+
+# Download dataset
+url = 'https://raw.githubusercontent.com/plotly/datasets/master/diabetes.csv'
+response = requests.get(url)
+with open('diabetes_raw.csv', 'wb') as f:
+    f.write(response.content)
+
+# Simple preprocessing
+df = pd.read_csv('diabetes_raw.csv')
+cols_with_zero = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
+df[cols_with_zero] = df[cols_with_zero].replace(0, np.nan)
+for col in cols_with_zero:
+    df[col] = df[col].fillna(df[col].median())
+
+# Save preprocessed data
+df.to_csv('preprocessed_diabetes.csv', index=False)
+print('Preprocessed data saved with shape:', df.shape)
+        "
+    
+    - name: Run MLflow model training
+      run: |
+        echo "Starting MLflow training..."
+        python modelling.py
+    
+    - name: Verify MLflow runs
+      run: |
+        if [ -d "mlruns" ]; then
+          echo "MLflow runs directory created successfully"
+          echo "Number of experiments: $(ls -1 mlruns/ | wc -l)"
+        else
+          echo "Error: mlruns directory not found"
+          exit 1
+        fi
+    
+    - name: Configure Git
+      run: |
+        git config user.name "markfin"
+        git config user.email "marfinzamaruddin@gmail.com"
+    
+    - name: Commit and push MLflow artifacts
+      run: |
+        # Add only the modelling.py and requirements.txt (not mlruns)
+        git add modelling.py requirements.txt .github/workflows/*.yml
+        git add preprocessed_diabetes.csv diabetes_raw.csv
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "CI: Update model training scripts [skip ci]"
+          git push
+        fi
