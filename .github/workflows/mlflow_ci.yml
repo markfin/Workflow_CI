@@ -1,0 +1,41 @@
+name: MLflow CI Workflow
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  train-model:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install mlflow pandas scikit-learn numpy
+
+      - name: Run MLflow Project
+        run: |
+          cd MLProject
+          mlflow run .
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "markfin"
+          git config --global user.email "marfinzamaruddin@gmail.com"
+
+      - name: Commit and Push Changes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git add .
+          # Commit only if there are changes (excluding ignored files)
+          git diff --quiet && git diff --staged --quiet || git commit -m "Automated CI: Model Training Complete"
+          git push
