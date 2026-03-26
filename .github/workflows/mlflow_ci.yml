@@ -27,6 +27,7 @@ jobs:
           pip install mlflow pandas scikit-learn numpy
 
       - name: Run MLflow Project
+        shell: bash -l 0
         run: |
           cd MLProject
           mlflow run .
