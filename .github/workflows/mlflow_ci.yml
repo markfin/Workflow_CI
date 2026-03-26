@@ -16,6 +16,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
+      
       - name: Set up Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -27,7 +28,7 @@ jobs:
           pip install mlflow pandas scikit-learn numpy
 
       - name: Run MLflow Project
-        shell: bash -l 0
+        shell: bash -l {0}
         run: |
           cd MLProject
           mlflow run .
@@ -42,6 +43,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git add .
-          # Commit only if there are changes (excluding ignored files)
           git diff --quiet && git diff --staged --quiet || git commit -m "Automated CI: Model Training Complete"
           git push
