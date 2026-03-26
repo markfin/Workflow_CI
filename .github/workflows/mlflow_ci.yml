@@ -25,7 +25,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install mlflow pandas scikit-learn numpy
+          pip install mlflow==2.11.0 pandas scikit-learn numpy
 
       - name: Run MLflow Project
         shell: bash -l {0}
